@@ -3,176 +3,1272 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>適正年収診断ツール</title>
+    <title>目標達成ばんそう者（100%版）</title>
+    <!-- Tailwind CSS を読み込み -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Kosugi+Maru&display=swap');
+        /* カスタムフォントと基本設定 */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
         body {
-            font-family: 'Kosugi Maru', sans-serif;
-            background-color: #0d1117;
-            color: #c9d1d9;
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8; /* 落ち着いたライトブルーグレーの背景 */
         }
-        .main-container {
-            background: #161b22;
-            border: 1px solid #30363d;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        .container-box {
+            max-width: 900px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background-color: white;
+            border-radius: 1.5rem; /* よりモダンな角丸 */
+            box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.15);
         }
-        .button-gradient {
-            background-image: linear-gradient(90deg, #1f6feb, #4c8cff);
-            transition: transform 0.2s, box-shadow 0.2s;
+        .btn-primary {
+            background-color: #3b82f6; /* Blue 500 */
+            color: white;
+            transition: background-color 0.2s, transform 0.1s;
         }
-        .button-gradient:hover {
+        .btn-primary:hover {
+            background-color: #2563eb; /* Blue 600 */
             transform: translateY(-1px);
-            box-shadow: 0 5px 15px rgba(31, 110, 235, 0.4);
         }
-        .spinner {
-            border: 4px solid rgba(255, 255, 255, 0.3);
-            border-top: 4px solid #4c8cff;
-            border-radius: 50%;
-            width: 32px;
-            height: 32px;
-            animation: spin 1s linear infinite;
+        .task-item {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            align-items: center;
+        }
+        /* モーダルオーバーレイ */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background-color: white;
+            padding: 2.5rem;
+            border-radius: 1rem;
+            max-width: 600px;
+            width: 90%;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 10, 0, 0.1);
+            transform: scale(0.95);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .modal-open .modal-content {
+            transform: scale(1);
+        }
+        .loading-spinner {
+            border-top-color: #3b82f6;
+            animation: spin 1s ease-in-out infinite;
         }
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-        /* Report styling for emphasis */
-        .report-section {
-            border-left: 4px solid #4c8cff;
-            padding-left: 1rem;
-            margin-top: 1.5rem;
+        /* 進捗バーのスタイル */
+        .progress-bar {
+            height: 10px;
+            border-radius: 9999px;
+            background-color: #e5e7eb;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            border-radius: 9999px;
+            transition: width 0.5s ease-out;
         }
     </style>
 </head>
-<body class="p-4 flex flex-col items-center justify-center min-h-screen">
+<body class="p-4 sm:p-8">
 
-    <!-- Main Container -->
-    <div class="main-container p-6 sm:p-8 rounded-xl max-w-3xl w-full mx-auto">
-        <header class="text-center mb-8">
-            <h1 class="text-3xl sm:text-4xl font-bold tracking-tight text-white mb-2">
-                あなたの適正年収診断
+    <div id="main-app" class="container-box">
+        <header class="text-center mb-10">
+            <h1 class="text-4xl sm:text-5xl font-extrabold text-gray-900 leading-tight">
+                目標達成ばんそう者
             </h1>
-            <p class="text-sm text-gray-400">市場価値に基づいたパーソナライズされた年収レポートをAIが作成します。</p>
+            <p class="text-lg text-gray-500 mt-2">AIがあなたの目標達成を最初から最後までしっかりとサポートします！計画作成から進捗管理、モチベーション維持までお任せください。</p>
         </header>
 
-        <!-- Input Form -->
-        <div class="space-y-6">
-            <!-- 1. 基本情報 -->
-            <div class="bg-[#21262d] p-4 rounded-lg">
-                <h2 class="text-lg font-semibold text-[#4c8cff] mb-3">1. 基本情報</h2>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label for="age-select" class="block text-sm font-medium mb-1">年齢層</label>
-                        <select id="age-select" class="w-full p-2 rounded-md bg-[#0d1117] border border-[#30363d] text-white focus:ring-blue-500 focus:border-blue-500">
-                            <option value="">選択してください</option>
-                            <option value="20代前半">20代前半</option>
-                            <option value="20代後半">20代後半</option>
-                            <option value="30代前半">30代前半</option>
-                            <option value="30代後半">30代後半</option>
-                            <option value="40代">40代</option>
-                            <option value="50代以上">50代以上</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label for="experience-select" class="block text-sm font-medium mb-1">職務経験年数</label>
-                        <select id="experience-select" class="w-full p-2 rounded-md bg-[#0d1117] border border-[#30363d] text-white focus:ring-blue-500 focus:border-blue-500">
-                            <option value="">選択してください</option>
-                            <option value="0-3年 (初心者)">0-3年 (初心者)</option>
-                            <option value="4-7年 (中堅)">4-7年 (中堅)</option>
-                            <option value="8-15年 (ベテラン)">8-15年 (ベテラン)</option>
-                            <option value="16年以上 (エキスパート)">16年以上 (エキスパート)</option>
-                        </select>
-                    </div>
-                </div>
+        <!-- 目標入力フォーム -->
+        <div id="input-section" class="mb-12 p-8 bg-blue-50 border-l-8 border-blue-400 rounded-xl">
+            <h2 class="text-2xl font-bold text-blue-800 mb-4">📝 新しい目標と条件を入力</h2>
+            
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-1">目標の種類を選択</label>
+                <select id="goal-type-select" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-gray-800 shadow-sm">
+                    <option value="general">一般的な目標 (スキルアップ、趣味など)</option>
+                    <option value="exam">受験・資格試験の目標</option>
+                    <option value="business">ビジネス・キャリアの目標 (プロジェクト、営業成績など)</option>
+                </select>
             </div>
 
-            <!-- 2. 職務とロケーション -->
-            <div class="bg-[#21262d] p-4 rounded-lg">
-                <h2 class="text-lg font-semibold text-[#4c8cff] mb-3">2. 職務とロケーション</h2>
-                <div class="space-y-4">
-                    <div>
-                        <label for="industry-input" class="block text-sm font-medium mb-1">現在の業界</label>
-                        <input type="text" id="industry-input" placeholder="例: IT/ソフトウェア開発、医療・福祉、金融" class="w-full p-2 rounded-md bg-[#0d1117] border border-[#30363d] text-white placeholder-gray-500 focus:ring-blue-500 focus:border-blue-500">
-                    </div>
-                    <div>
-                        <label for="role-input" class="block text-sm font-medium mb-1">現在の職種・役割</label>
-                        <input type="text" id="role-input" placeholder="例: Webエンジニア、営業マネージャー、経理担当" class="w-full p-2 rounded-md bg-[#0d1117] border border-[#30363d] text-white placeholder-gray-500 focus:ring-blue-500 focus:border-blue-500">
-                    </div>
-                    <div>
-                        <label for="location-input" class="block text-sm font-medium mb-1">勤務地</label>
-                        <input type="text" id="location-input" placeholder="例: 東京都、大阪府、リモート" class="w-full p-2 rounded-md bg-[#0d1117] border border-[#30363d] text-white placeholder-gray-500 focus:ring-blue-500 focus:border-blue-500">
-                    </div>
-                </div>
+            <!-- 一般的な目標入力エリア -->
+            <div id="general-goal-fields" class="space-y-4">
+                <input type="text" id="wish-input" placeholder="目標 (例: 英語を流暢に話せるようになる)" 
+                       class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-gray-800 shadow-sm">
+                <input type="text" id="criterion-input" placeholder="達成条件 (例: 外国人と30分会話できる)" 
+                       class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-gray-800 shadow-sm">
+                <input type="date" id="deadline-input" 
+                       class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-gray-800 shadow-sm">
             </div>
 
-            <!-- 3. スキルと強み -->
-            <div class="bg-[#21262d] p-4 rounded-lg">
-                <h2 class="text-lg font-semibold text-[#4c8cff] mb-3">3. スキルと強み (複数選択可)</h2>
-                <div class="flex flex-wrap gap-2 text-sm">
-                    <label class="flex items-center space-x-2 bg-[#0d1117] rounded-full px-3 py-1 cursor-pointer hover:bg-[#2c333b]">
-                        <input type="checkbox" name="skills" value="プロジェクト管理能力" class="form-checkbox h-4 w-4 text-blue-500 rounded border-gray-600 focus:ring-blue-500">
-                        <span class="text-gray-300">プロジェクト管理能力</span>
-                    </label>
-                    <label class="flex items-center space-x-2 bg-[#0d1117] rounded-full px-3 py-1 cursor-pointer hover:bg-[#2c333b]">
-                        <input type="checkbox" name="skills" value="英語力/ビジネスレベルの語学力" class="form-checkbox h-4 w-4 text-blue-500 rounded border-gray-600 focus:ring-blue-500">
-                        <span class="text-gray-300">英語力/ビジネスレベルの語学力</span>
-                    </label>
-                    <label class="flex items-center space-x-2 bg-[#0d1117] rounded-full px-3 py-1 cursor-pointer hover:bg-[#2c333b]">
-                        <input type="checkbox" name="skills" value="特定技術の専門知識 (例: AI, Fintech)" class="form-checkbox h-4 w-4 text-blue-500 rounded border-gray-600 focus:ring-blue-500">
-                        <span class="text-gray-300">特定技術の専門知識 (例: AI, Fintech)</span>
-                    </label>
-                    <label class="flex items-center space-x-2 bg-[#0d1117] rounded-full px-3 py-1 cursor-pointer hover:bg-[#2c333b]">
-                        <input type="checkbox" name="skills" value="チーム育成/リーダーシップ経験" class="form-checkbox h-4 w-4 text-blue-500 rounded border-gray-600 focus:ring-blue-500">
-                        <span class="text-gray-300">チーム育成/リーダーシップ経験</span>
-                    </label>
-                    <label class="flex items-center space-x-2 bg-[#0d1117] rounded-full px-3 py-1 cursor-pointer hover:bg-[#2c333b]">
-                        <input type="checkbox" name="skills" value="高いコミュニケーション/交渉力" class="form-checkbox h-4 w-4 text-blue-500 rounded border-gray-600 focus:ring-blue-500">
-                        <span class="text-gray-300">高いコミュニケーション/交渉力</span>
-                    </label>
-                </div>
-                <label for="other-skills" class="block text-sm font-medium mt-3 mb-1">その他の強み</label>
-                <textarea id="other-skills" rows="2" placeholder="例: 簿記一級、マーケティング戦略立案の経験" class="w-full p-2 rounded-md bg-[#0d1117] border border-[#30363d] text-white placeholder-gray-500 focus:ring-blue-500 focus:border-blue-500"></textarea>
+            <!-- 受験・資格試験目標入力エリア (最初は非表示) -->
+            <div id="exam-goal-fields" class="space-y-4 hidden">
+                <input type="text" id="exam-name-input" placeholder="試験名・資格名 (例: 大学入学共通テスト、TOEIC)" 
+                       class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-gray-800 shadow-sm">
+                <input type="text" id="target-score-input" placeholder="目標点数・目標ランク (例: 700点、A判定)" 
+                       class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-gray-800 shadow-sm">
+                <input type="date" id="exam-date-input" 
+                       class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-gray-800 shadow-sm">
             </div>
             
-            <!-- 4. 働き方 -->
-            <div class="bg-[#21262d] p-4 rounded-lg">
-                <h2 class="text-lg font-semibold text-[#4c8cff] mb-3">4. 希望の働き方</h2>
-                <div class="flex flex-wrap gap-2 text-sm">
-                    <label class="flex items-center space-x-2 bg-[#0d1117] rounded-full px-3 py-1 cursor-pointer hover:bg-[#2c333b]">
-                        <input type="checkbox" name="work_style" value="完全リモートワーク希望" class="form-checkbox h-4 w-4 text-blue-500 rounded border-gray-600 focus:ring-blue-500">
-                        <span class="text-gray-300">完全リモートワーク希望</span>
-                    </label>
-                    <label class="flex items-center space-x-2 bg-[#0d1117] rounded-full px-3 py-1 cursor-pointer hover:bg-[#2c333b]">
-                        <input type="checkbox" name="work_style" value="管理職・マネージャーポジションを志向" class="form-checkbox h-4 w-4 text-blue-500 rounded border-gray-600 focus:ring-blue-500">
-                        <span class="text-gray-300">管理職・マネージャーポジションを志向</span>
-                    </label>
-                    <label class="flex items-center space-x-2 bg-[#0d1117] rounded-full px-3 py-1 cursor-pointer hover:bg-[#2c333b]">
-                        <input type="checkbox" name="work_style" value="副業/兼業が可能であることを重視" class="form-checkbox h-4 w-4 text-blue-500 rounded border-gray-600 focus:ring-blue-500">
-                        <span class="text-gray-300">副業/兼業が可能であることを重視</span>
-                    </label>
+            <!-- ビジネス目標入力エリア (最初は非表示) -->
+            <div id="business-goal-fields" class="space-y-4 hidden">
+                <input type="text" id="business-target-input" placeholder="目標 (例: 新規顧客を20社獲得する、プロジェクトを成功させる)" 
+                       class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-gray-800 shadow-sm">
+                <input type="text" id="business-kpi-input" placeholder="達成指標/KPI (例: 既存サービスの売上を15%向上させる)" 
+                       class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-gray-800 shadow-sm">
+                <input type="date" id="business-deadline-input" 
+                       class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-gray-800 shadow-sm">
+            </div>
+
+
+            <button id="add-wish-button" class="btn-primary px-6 py-3 rounded-xl font-semibold w-full flex items-center justify-center mt-6 shadow-md hover:shadow-lg">
+                🚀 アンケートに進む & AIに最強の行動計画を生成してもらう
+            </button>
+            
+        </div>
+
+        <!-- 目標リスト表示エリア -->
+        <div id="wishes-list" class="space-y-8">
+            <!-- 目標カードがここに挿入されます -->
+        </div>
+
+        <!-- 目標がない場合のメッセージ -->
+        <div id="empty-state" class="text-center p-12 border-4 border-dashed border-gray-300 rounded-xl bg-gray-50 mt-12" style="display: none;">
+            <p class="text-2xl text-gray-500 font-semibold">まずは、あなたの「絶対に叶えたいこと」を入力してみましょう！</p>
+            <p class="text-gray-400 mt-2">目標を入力すると、AIが最適な計画作成をサポートします。</p>
+        </div>
+        
+    </div>
+
+    <!-- アンケートモーダル -->
+    <div id="questionnaire-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h3 class="text-2xl font-bold text-gray-800 mb-4 border-b pb-2">目標達成のための詳細設定 (5つの質問)</h3>
+            <p class="text-gray-600 mb-6">あなたに合った行動計画を作成するために、以下の質問にお答えください。</p>
+            
+            <div id="questions-container" class="space-y-6">
+                <!-- 質問 1: 目標のタイプと分野 (動的に変化) -->
+                <div>
+                    <label id="q1-label" class="block text-lg font-medium text-gray-700 mb-2">1. あなたの目標の主な分野は？</label>
+                    <select id="q1-field" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                        <!-- オプションはJSで設定されます -->
+                    </select>
+                </div>
+
+                <!-- 質問 2: 現在のレベルと開始地点 -->
+                <div>
+                    <label id="q2-label" class="block text-lg font-medium text-gray-700 mb-2">2. 目標分野におけるあなたの現在のレベルは？</label>
+                    <select id="q2-level" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                        <option value="beginner">全くの初心者 (基礎から学びたい)</option>
+                        <option value="intermediate">中級者 (経験はあるが停滞している)</option>
+                        <option value="advanced">上級者 (最後の壁を乗り越えたい)</option>
+                    </select>
+                </div>
+
+                <!-- 質問 3: 確保できる時間 (リソース) -->
+                <div>
+                    <label class="block text-lg font-medium text-gray-700 mb-2">3. 1日に確保できる平均的な学習・作業時間は？</label>
+                    <select id="q3-time" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                        <option value="short">30分未満 (すきま時間)</option>
+                        <option value="medium">30分〜1時間 (毎日確実に)</option>
+                        <option value="long">1時間〜2時間 (集中して取り組む)</option>
+                        <option value="intensive">2時間以上 (集中的な学習期間)</option>
+                    </select>
+                </div>
+                
+                <!-- 質問 4: 学習スタイル (モチベーション) -->
+                <div>
+                    <label class="block text-lg font-medium text-gray-700 mb-2">4. どの学習スタイルが一番モチベーションを保てますか？</label>
+                    <select id="q4-style" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                        <option value="theory">理論/座学 (本、動画、インプット中心)</option>
+                        <option value="practice">実践/アウトプット (問題を解く、手を動かす中心)</option>
+                        <option value="social">他人との交流 (コーチ、仲間、レビュー中心)</option>
+                        <option value="review">過去問/復習 (反復と定着中心)</option>
+                    </select>
+                </div>
+                
+                <!-- 質問 5: 最初のタスクの難易度 -->
+                <div>
+                    <label class="block text-lg font-medium text-gray-700 mb-2">5. 最初の1週間で取り組むタスクの難易度レベルは？</label>
+                    <select id="q5-difficulty" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                        <option value="easy">「簡単すぎて続けられる」レベル</option>
+                        <option value="medium">「ちょっと頑張れば達成できる」レベル</option>
+                        <option value="hard">「挑戦的で集中力が必要」なレベル</option>
+                    </select>
                 </div>
             </div>
 
-        </div>
-
-        <!-- Button -->
-        <div class="flex justify-center mt-8">
-            <button id="diagnose-button" class="button-gradient text-white font-bold py-3 px-12 rounded-full shadow-lg transition-all duration-300 flex items-center justify-center">
-                <span id="button-text">年収を診断する</span>
-                <div id="loading-spinner" class="spinner ml-3 hidden"></div>
+            <button id="generate-tasks-button" class="btn-primary px-6 py-3 rounded-xl font-semibold w-full mt-8 shadow-md hover:shadow-lg">
+                行動計画を生成して目標をリストに追加
             </button>
-        </div>
-
-        <!-- Result Area -->
-        <div id="result-container" class="mt-10 p-6 rounded-xl bg-[#21262d] border border-[#30363d] hidden">
-            <h2 class="text-2xl font-bold text-[#4c8cff] mb-4 text-center">診断レポート</h2>
-            <div id="report-content" class="text-gray-300 whitespace-pre-wrap">
-                <!-- AI report will be inserted here -->
+            <div id="modal-status" class="mt-4 text-center text-gray-600 hidden">
+                <div class="flex items-center justify-center space-x-2">
+                    <div class="loading-spinner h-5 w-5 border-4 border-gray-200 rounded-full"></div>
+                    <span>AIが最適な行動計画を考え中です...</span>
+                </div>
             </div>
         </div>
     </div>
 
-    <script type="module" src="script.js"></script>
+    <!-- 結果画面（全画面表示） -->
+    <div id="result-screen" class="fixed inset-0 bg-white p-8 overflow-y-auto" style="display: none; z-index: 100;">
+        <div class="container-box text-center">
+            <h1 class="text-6xl font-extrabold text-teal-600 mb-4">
+                🏆 目標完全達成! 🏆
+            </h1>
+            <h2 class="text-3xl font-bold text-gray-800 mb-8">
+                全ての目標を達成しました！素晴らしいです！
+            </h2>
+            <button id="close-result-button" class="btn-primary px-8 py-3 rounded-xl font-semibold text-xl shadow-lg">
+                リスト管理画面に戻る
+            </button>
+        </div>
+    </div>
+    
+    <!-- カスタム確認モーダル (alert/confirm 代替) -->
+    <div id="custom-modal-overlay" class="modal-overlay">
+        <div class="modal-content p-8">
+            <h3 id="custom-modal-title" class="text-xl font-bold text-gray-800 mb-4">確認</h3>
+            <p id="custom-modal-message" class="text-gray-700 mb-6"></p>
+            <div class="flex justify-end space-x-4">
+                <button id="custom-modal-cancel" class="bg-gray-200 text-gray-700 px-6 py-2 rounded-lg font-semibold hover:bg-gray-300">
+                    キャンセル
+                </button>
+                <button id="custom-modal-confirm" class="bg-red-500 text-white px-6 py-2 rounded-lg font-semibold hover:bg-red-600">
+                    OK
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, addDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        
+        // 開発環境でのロギングを有効化
+        setLogLevel('debug');
+
+        // --- Firebase/Canvas グローバル変数設定 ---
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        let app, db, auth;
+        let userId = null;
+        let isAuthReady = false;
+
+        // --- DOM要素 ---
+        const wishesListEl = document.getElementById('wishes-list');
+        const goalTypeSelectEl = document.getElementById('goal-type-select');
+        const generalGoalFieldsEl = document.getElementById('general-goal-fields');
+        const wishInputEl = document.getElementById('wish-input');
+        const criterionInputEl = document.getElementById('criterion-input');
+        const deadlineInputEl = document.getElementById('deadline-input');
+        const examGoalFieldsEl = document.getElementById('exam-goal-fields');
+        const examNameInputEl = document.getElementById('exam-name-input');
+        const targetScoreInputEl = document.getElementById('target-score-input');
+        const examDateInputEl = document.getElementById('exam-date-input');
+        const businessGoalFieldsEl = document.getElementById('business-goal-fields');
+        const businessTargetInputEl = document.getElementById('business-target-input');
+        const businessKpiInputEl = document.getElementById('business-kpi-input');
+        const businessDeadlineInputEl = document.getElementById('business-deadline-input');
+        const addWishButton = document.getElementById('add-wish-button');
+        const emptyStateEl = document.getElementById('empty-state');
+        const resultScreenEl = document.getElementById('result-screen');
+        const closeResultButton = document.getElementById('close-result-button');
+        const questionnaireModal = document.getElementById('questionnaire-modal');
+        const generateTasksButton = document.getElementById('generate-tasks-button');
+        const modalStatusEl = document.getElementById('modal-status');
+        const q1LabelEl = document.getElementById('q1-label');
+        const q1FieldEl = document.getElementById('q1-field');
+        // カスタムモーダル要素
+        const customModalOverlay = document.getElementById('custom-modal-overlay');
+        const customModalTitle = document.getElementById('custom-modal-title');
+        const customModalMessage = document.getElementById('custom-modal-message');
+        const customModalConfirmBtn = document.getElementById('custom-modal-confirm');
+        const customModalCancelBtn = document.getElementById('custom-modal-cancel');
+
+
+        let temporaryWishData = null; 
+        let pendingConfirmation = null; // Promise resolve function for custom confirm
+
+        // --- LLM API 設定 ---
+        const API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent";
+        const API_KEY = ""; 
+
+        // --- ユーティリティ関数 ---
+
+        /**
+         * カスタム確認ダイアログ (alert/confirm 代替)
+         */
+        function customConfirm(message, title = '確認') {
+            return new Promise(resolve => {
+                customModalTitle.textContent = title;
+                customModalMessage.textContent = message;
+                customModalOverlay.style.display = 'flex';
+
+                // 既存のリスナーを削除
+                customModalConfirmBtn.onclick = null;
+                customModalCancelBtn.onclick = null;
+
+                // 新しいリスナーを設定
+                customModalConfirmBtn.onclick = () => {
+                    customModalOverlay.style.display = 'none';
+                    resolve(true);
+                };
+                customModalCancelBtn.onclick = () => {
+                    customModalOverlay.style.display = 'none';
+                    resolve(false);
+                };
+            });
+        }
+
+        /**
+         * Exponential Backoff付きフェッチ関数
+         */
+        async function fetchWithExponentialBackoff(url, options, retries = 5) {
+            for (let i = 0; i < retries; i++) {
+                try {
+                    const response = await fetch(url, options);
+                    if (response.ok) {
+                        return response;
+                    }
+                    if (response.status === 429) {
+                        const delay = Math.pow(2, i) * 1000 + Math.random() * 1000;
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                        continue;
+                    }
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                } catch (error) {
+                    if (i === retries - 1) throw error;
+                    const delay = Math.pow(2, i) * 1000 + Math.random() * 1000;
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                }
+            }
+            throw new Error("API call failed after multiple retries.");
+        }
+
+
+        /**
+         * データをFirestoreに保存する
+         */
+        async function saveWishToFirestore(wishData) {
+            if (!isAuthReady || !userId) {
+                console.error("Firestore save failed: Auth not ready or userId missing.");
+                return;
+            }
+            try {
+                // Private data path: /artifacts/{appId}/users/{userId}/wishes
+                const collectionRef = collection(db, 'artifacts', appId, 'users', userId, 'wishes');
+                await addDoc(collectionRef, wishData);
+                console.log("Wish saved successfully to Firestore.");
+            } catch (error) {
+                console.error("Error adding document: ", error);
+                await customConfirm("データの保存に失敗しました: " + error.message, 'エラー');
+            }
+        }
+
+        /**
+         * Firestoreの目標リストにリアルタイムリスナーを設定する
+         */
+        function setupFirestoreListener() {
+            if (!isAuthReady || !userId) return;
+
+            // Private data path: /artifacts/{appId}/users/{userId}/wishes
+            const collectionRef = collection(db, 'artifacts', appId, 'users', userId, 'wishes');
+            
+            onSnapshot(collectionRef, (snapshot) => {
+                const fetchedWishes = [];
+                snapshot.forEach(doc => {
+                    fetchedWishes.push({ id: doc.id, ...doc.data() });
+                });
+                renderWishes(fetchedWishes);
+                checkAllCompleted(fetchedWishes);
+            }, (error) => {
+                console.error("Error setting up Firestore listener: ", error);
+                // customConfirm("目標リストの読み込みに失敗しました: " + error.message, 'エラー');
+            });
+        }
+        
+        /**
+         * Firebaseの初期化と認証
+         */
+        async function initFirebase() {
+            if (!firebaseConfig) {
+                console.error("Firebase config is missing.");
+                return;
+            }
+            
+            try {
+                app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+                
+                onAuthStateChanged(auth, async (user) => {
+                    if (user) {
+                        userId = user.uid;
+                        isAuthReady = true;
+                        setupFirestoreListener(); // 認証完了後にリスナーをセットアップ
+                    } else {
+                        try {
+                            if (initialAuthToken) {
+                                await signInWithCustomToken(auth, initialAuthToken);
+                            } else {
+                                await signInAnonymously(auth);
+                            }
+                        } catch(error) {
+                            console.error("Authentication failed: ", error);
+                            userId = crypto.randomUUID();
+                            isAuthReady = true;
+                        }
+                    }
+                    if (!userId) {
+                        userId = crypto.randomUUID();
+                        isAuthReady = true;
+                    }
+                });
+
+            } catch (error) {
+                console.error("Firebase initialization failed:", error);
+                await customConfirm("アプリの初期化に失敗しました。: " + error.message, 'エラー');
+            }
+        }
+
+        // --- 進捗計算ユーティリティ ---
+        function calculateProgress(wish) {
+            const totalTasks = (wish.tasks || []).length;
+            const completedTasks = (wish.tasks || []).filter(t => t.completed).length;
+            const completionPercentage = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+
+            const deadlineDate = wish.type === 'exam' ? wish.examDate : (wish.type === 'business' ? wish.deadline : wish.deadline);
+            let daysLeft = '期限なし';
+            let status = 'neutral';
+
+            if (deadlineDate) {
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const deadline = new Date(deadlineDate);
+                deadline.setHours(0, 0, 0, 0);
+
+                const diffTime = deadline.getTime() - today.getTime();
+                daysLeft = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                if (daysLeft < 0 && !wish.completed) {
+                    status = 'overdue';
+                    daysLeft = Math.abs(daysLeft) + '日超過';
+                } else if (daysLeft <= 7 && daysLeft >= 0 && !wish.completed) {
+                    status = 'urgent';
+                } else if (wish.completed) {
+                    status = 'completed';
+                    daysLeft = '達成済み';
+                } else {
+                    status = 'active';
+                    daysLeft = daysLeft + '日';
+                }
+            } else {
+                status = 'active';
+            }
+
+            return { completionPercentage, daysLeft, status };
+        }
+
+
+        // --- DOM生成/レンダリング ---
+
+        function renderWishes(currentWishes) {
+            wishesListEl.innerHTML = ''; 
+
+            if (currentWishes.length === 0) {
+                emptyStateEl.style.display = 'block';
+                return;
+            } else {
+                emptyStateEl.style.display = 'none';
+            }
+
+            currentWishes.forEach((wish) => {
+                const wishCard = createWishCard(wish);
+                wishesListEl.appendChild(wishCard);
+            });
+        }
+        
+        function checkAllCompleted(currentWishes) {
+            const allCompleted = currentWishes.length > 0 && currentWishes.every(w => w.completed);
+            
+            if (allCompleted) {
+                resultScreenEl.style.display = 'block';
+                document.body.style.overflow = 'hidden'; 
+            } else {
+                resultScreenEl.style.display = 'none';
+                document.body.style.overflow = 'auto';
+            }
+        }
+
+        function createWishCard(wish) {
+            const card = document.createElement('div');
+            card.className = `p-6 rounded-xl shadow-2xl transition-shadow duration-300 ${wish.completed ? 'bg-green-50 border-4 border-green-500 shadow-green-200' : 'bg-white border-2 border-gray-100 hover:shadow-2xl'}`;
+
+            // ヘッダー部分
+            const header = document.createElement('div');
+            header.className = 'flex justify-between items-start mb-4 pb-3 border-b border-gray-200';
+            
+            const titleGroup = document.createElement('div');
+            titleGroup.className = 'flex items-center space-x-3';
+
+            const completionCheckbox = document.createElement('input');
+            completionCheckbox.type = 'checkbox';
+            completionCheckbox.checked = wish.completed;
+            completionCheckbox.className = 'w-5 h-5 text-green-600 bg-gray-100 border-gray-300 rounded focus:ring-green-500';
+            completionCheckbox.addEventListener('change', () => toggleWishCompletion(wish.id, wish));
+            
+            const title = document.createElement('h3');
+            title.className = `text-2xl font-bold text-gray-800 ${wish.completed ? 'line-through text-green-600' : ''}`;
+            
+            let titleText = wish.title;
+            let conditionLabel = '条件';
+            let deadlineLabel = '期限';
+            let conditionText = wish.criterion || '<span class="text-red-500">未設定</span>';
+            let dateValue = wish.deadline;
+
+            if (wish.type === 'exam') {
+                 titleText = `${wish.examName} (${wish.targetScore}目標)`;
+                 title.title = `試験名: ${wish.examName}, 目標点数: ${wish.targetScore}`;
+                 conditionLabel = '目標点';
+                 conditionText = wish.targetScore || '<span class="text-red-500">未設定</span>';
+                 deadlineLabel = '試験日';
+                 dateValue = wish.examDate;
+            } else if (wish.type === 'business') {
+                 titleText = wish.title;
+                 title.title = `目標: ${wish.title}, KPI: ${wish.kpi}`;
+                 conditionLabel = 'KPI/指標';
+                 conditionText = wish.kpi || '<span class="text-red-500">未設定</span>';
+                 deadlineLabel = '期限';
+                 dateValue = wish.deadline; 
+            }
+            
+            title.textContent = titleText;
+            titleGroup.appendChild(completionCheckbox);
+            titleGroup.appendChild(title);
+
+            const deleteButton = document.createElement('button');
+            deleteButton.className = 'text-gray-400 hover:text-red-500 transition-colors p-1 rounded-full';
+            deleteButton.innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+            `;
+            deleteButton.addEventListener('click', () => deleteWish(wish.id, titleText));
+
+            header.appendChild(titleGroup);
+            header.appendChild(deleteButton);
+            card.appendChild(header);
+
+            // 進捗バーとサマリー
+            const progress = calculateProgress(wish);
+            let barColor = 'bg-blue-500';
+            let summaryColor = 'text-blue-600';
+
+            if (wish.completed) {
+                barColor = 'bg-green-500';
+                summaryColor = 'text-green-600';
+            } else if (progress.status === 'urgent') {
+                barColor = 'bg-red-500';
+                summaryColor = 'text-red-600';
+            } else if (progress.status === 'overdue') {
+                barColor = 'bg-yellow-600';
+                summaryColor = 'text-yellow-700';
+            }
+
+            const summarySection = document.createElement('div');
+            summarySection.className = 'mb-6 p-4 bg-gray-50 rounded-lg border border-gray-100';
+            summarySection.innerHTML = `
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-lg font-bold ${summaryColor}">進捗: ${progress.completionPercentage}%</span>
+                    <span class="text-sm font-medium text-gray-600">残り/超過: ${progress.daysLeft}</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill ${barColor}" style="width: ${progress.completionPercentage}%;"></div>
+                </div>
+            `;
+            card.appendChild(summarySection);
+
+            // 期限と条件の表示
+            const details = document.createElement('div');
+            details.className = 'grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6 text-sm';
+
+            const criterionDiv = document.createElement('div');
+            criterionDiv.className = 'p-3 bg-gray-100 rounded-lg';
+            criterionDiv.innerHTML = `<span class="font-bold text-gray-600">${conditionLabel}:</span> ${conditionText}`;
+
+            const deadlineDiv = document.createElement('div');
+            deadlineDiv.className = 'p-3 bg-gray-100 rounded-lg';
+            const deadlineText = dateValue ? new Date(dateValue).toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' }) : '<span class="text-gray-500">設定なし</span>';
+            const deadlineColor = progress.status === 'overdue' ? 'text-red-600 font-bold' : 'text-gray-800';
+            deadlineDiv.innerHTML = `<span class="font-bold text-gray-600">${deadlineLabel}:</span> <span class="${deadlineColor}">${deadlineText}</span>`;
+
+            details.appendChild(criterionDiv);
+            details.appendChild(deadlineDiv);
+            card.appendChild(details);
+
+            // AIレビューとコーチング
+            const reviewSection = document.createElement('div');
+            reviewSection.className = 'mt-4 pt-4 border-t border-gray-100';
+            
+            const reviewHeader = document.createElement('div');
+            reviewHeader.className = 'flex justify-between items-center mb-3';
+            reviewHeader.innerHTML = `<h4 class="text-lg font-semibold text-gray-700">📣 AIコーチング＆レビュー</h4>`;
+            
+            const reviewButton = document.createElement('button');
+            reviewButton.className = 'bg-yellow-500 text-white text-sm px-4 py-2 rounded-lg font-semibold hover:bg-yellow-600 transition-colors shadow-md';
+            reviewButton.textContent = 'レビューを依頼';
+            reviewButton.disabled = wish.completed;
+            reviewButton.addEventListener('click', async () => {
+                reviewButton.disabled = true;
+                reviewButton.textContent = '分析中...';
+                await callGeminiForReview(wish.id, wish);
+                reviewButton.textContent = 'レビューを依頼';
+                reviewButton.disabled = wish.completed;
+            });
+            
+            reviewHeader.appendChild(reviewButton);
+            reviewSection.appendChild(reviewHeader);
+
+            const reviewMessageEl = document.createElement('p');
+            reviewMessageEl.className = 'text-sm text-gray-700 p-3 bg-yellow-50 rounded-lg italic border border-yellow-200';
+            reviewMessageEl.innerHTML = wish.lastReview || '「レビューを依頼」ボタンを押して、AIから進捗状況の分析とアドバイスを受け取りましょう！';
+            reviewSection.appendChild(reviewMessageEl);
+            card.appendChild(reviewSection);
+
+            // タスクリスト
+            const tasksHeader = document.createElement('div');
+            tasksHeader.className = 'flex justify-between items-center mb-3 mt-8';
+            tasksHeader.innerHTML = `<h4 class="text-xl font-bold text-gray-800">✅ 行動計画 (${progress.completionPercentage}%)</h4>`;
+            card.appendChild(tasksHeader);
+
+            const tasksList = document.createElement('ul');
+            tasksList.className = 'space-y-3 pl-2';
+            
+            if (!wish.tasks || wish.tasks.length === 0) {
+                const noTask = document.createElement('p');
+                noTask.className = 'text-gray-500 text-sm italic';
+                noTask.textContent = '行動計画はまだ設定されていません。';
+                tasksList.appendChild(noTask);
+            } else {
+                wish.tasks.forEach((task, taskIndex) => {
+                    const taskItem = createTaskItem(task, wish.id, wish, taskIndex);
+                    tasksList.appendChild(taskItem);
+                });
+            }
+            card.appendChild(tasksList);
+
+            // 新しいタスクフォーム
+            const addTaskForm = document.createElement('div');
+            addTaskForm.className = 'flex mt-4 pt-4 border-t border-gray-100 gap-2';
+            
+            const taskInput = document.createElement('input');
+            taskInput.type = 'text';
+            taskInput.placeholder = '新しいステップを入力 (手動)';
+            taskInput.className = 'flex-grow p-2 text-sm border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500';
+            
+            const addTaskBtn = document.createElement('button');
+            addTaskBtn.className = 'bg-gray-200 text-gray-800 text-sm px-4 py-2 rounded-lg font-semibold hover:bg-gray-300 transition-colors whitespace-nowrap';
+            addTaskBtn.textContent = '追加';
+            addTaskBtn.addEventListener('click', () => addTask(wish.id, wish, taskInput.value));
+
+            taskInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault(); 
+                    addTask(wish.id, wish, taskInput.value);
+                }
+            });
+
+            addTaskForm.appendChild(taskInput);
+            addTaskForm.appendChild(addTaskBtn);
+            card.appendChild(addTaskForm);
+
+            return card;
+        }
+
+        function createTaskItem(task, wishId, wish, taskIndex) {
+            const listItem = document.createElement('li');
+            listItem.className = 'task-item p-2 rounded-lg hover:bg-gray-100 transition-colors';
+
+            const taskTextContainer = document.createElement('div');
+            taskTextContainer.className = 'flex items-start space-x-2 mr-2';
+
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.checked = task.completed;
+            checkbox.className = 'w-4 h-4 mt-1 text-green-600 bg-gray-100 border-gray-300 rounded focus:ring-green-500 flex-shrink-0';
+            checkbox.addEventListener('change', () => toggleTaskCompletion(wishId, wish, taskIndex));
+
+            const textWrapper = document.createElement('div');
+            textWrapper.className = 'flex-grow min-w-0';
+
+            const textSpan = document.createElement('span');
+            textSpan.id = `task-text-${wishId}-${taskIndex}`;
+            textSpan.className = `text-gray-700 text-base break-words ${task.completed ? 'line-through text-gray-500 italic' : ''}`;
+            
+            const priorityTag = task.priority ? `<span class="text-xs font-semibold py-0.5 px-2 rounded-full ${getPriorityClass(task.priority)} flex-shrink-0 mr-2">${task.priority}</span>` : '';
+            textSpan.innerHTML = priorityTag + task.description;
+
+            textWrapper.appendChild(textSpan);
+            taskTextContainer.appendChild(checkbox);
+            taskTextContainer.appendChild(textWrapper);
+
+            // アクションボタンコンテナ
+            const actionContainer = document.createElement('div');
+            actionContainer.className = 'flex space-x-1 flex-shrink-0';
+            
+            // 編集ボタン
+            const editButton = document.createElement('button');
+            editButton.className = 'text-gray-400 hover:text-blue-500 transition-colors p-1 rounded-full';
+            editButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-7 1l4-4m-4 4l-4 4m8-8l-4 4m-4 4l-4-4"/></svg>`;
+            editButton.title = 'タスクを編集';
+            editButton.addEventListener('click', () => editTaskInline(wishId, wish, taskIndex, textSpan));
+            
+            // 削除ボタン
+            const deleteButton = document.createElement('button');
+            deleteButton.className = 'text-gray-400 hover:text-red-500 transition-colors p-1 rounded-full';
+            deleteButton.innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            `;
+            deleteButton.title = 'タスクを削除';
+            deleteButton.addEventListener('click', () => deleteTask(wishId, wish, taskIndex));
+
+            actionContainer.appendChild(editButton);
+            actionContainer.appendChild(deleteButton);
+
+            listItem.appendChild(taskTextContainer);
+            listItem.appendChild(actionContainer);
+            return listItem;
+        }
+        
+        function editTaskInline(wishId, wish, taskIndex, textSpanEl) {
+            const currentTask = wish.tasks[taskIndex];
+            const currentDescription = currentTask.description;
+            
+            // 既存のテキストを非表示にし、編集フォームを表示
+            textSpanEl.style.display = 'none';
+
+            const editForm = document.createElement('div');
+            editForm.className = 'flex flex-col space-y-2 w-full';
+
+            // 記述編集インプット
+            const inputEl = document.createElement('input');
+            inputEl.type = 'text';
+            inputEl.value = currentDescription;
+            inputEl.className = 'p-1 text-sm border border-blue-300 rounded focus:ring-blue-500';
+            
+            // 優先度セレクト
+            const prioritySelect = document.createElement('select');
+            prioritySelect.className = 'p-1 text-xs border border-blue-300 rounded focus:ring-blue-500 w-24';
+            ['高', '中', '低', '手動'].forEach(p => {
+                const option = document.createElement('option');
+                option.value = p;
+                option.textContent = p;
+                if (currentTask.priority === p) option.selected = true;
+                prioritySelect.appendChild(option);
+            });
+            
+            // 保存ボタン
+            const saveButton = document.createElement('button');
+            saveButton.textContent = '保存';
+            saveButton.className = 'bg-blue-500 text-white text-xs px-2 py-1 rounded hover:bg-blue-600 transition-colors';
+            saveButton.addEventListener('click', () => {
+                updateTask(wishId, wish, taskIndex, inputEl.value.trim(), prioritySelect.value);
+                // 編集フォームを削除し、テキストを再表示
+                editForm.remove();
+                textSpanEl.style.display = 'block'; 
+            });
+
+            // キャンセルボタン
+            const cancelButton = document.createElement('button');
+            cancelButton.textContent = 'キャンセル';
+            cancelButton.className = 'bg-gray-300 text-gray-800 text-xs px-2 py-1 rounded hover:bg-gray-400 transition-colors';
+            cancelButton.addEventListener('click', () => {
+                // 編集フォームを削除し、テキストを再表示
+                editForm.remove();
+                textSpanEl.style.display = 'block';
+            });
+            
+            const buttonGroup = document.createElement('div');
+            buttonGroup.className = 'flex space-x-2';
+            buttonGroup.appendChild(saveButton);
+            buttonGroup.appendChild(cancelButton);
+
+            editForm.appendChild(inputEl);
+            editForm.appendChild(prioritySelect);
+            editForm.appendChild(buttonGroup);
+
+            // textSpanの親要素（textWrapper）の直前に挿入
+            textSpanEl.parentNode.insertBefore(editForm, textSpanEl);
+        }
+
+        function getPriorityClass(priority) {
+            switch (priority) {
+                case '高': return 'bg-red-200 text-red-800';
+                case '中': return 'bg-yellow-200 text-yellow-800';
+                case '低': return 'bg-blue-200 text-blue-800';
+                case '手動': return 'bg-gray-300 text-gray-700';
+                default: return 'bg-gray-300 text-gray-700';
+            }
+        }
+
+
+        // --- CRUD/更新操作 ---
+        
+        async function updateTask(wishId, wish, taskIndex, newDescription, newPriority) {
+            if (!db || !userId) return console.error("Firestore not initialized.");
+            if (!newDescription) return;
+
+            const updatedTasks = [...wish.tasks];
+            updatedTasks[taskIndex].description = newDescription;
+            updatedTasks[taskIndex].priority = newPriority;
+
+            try {
+                const docRef = doc(db, 'artifacts', appId, 'users', userId, 'wishes', wishId);
+                await updateDoc(docRef, { 
+                    tasks: updatedTasks
+                });
+            } catch (error) {
+                console.error("Error updating task: ", error);
+                await customConfirm("タスクの更新に失敗しました: " + error.message, 'エラー');
+            }
+        }
+
+
+        async function toggleWishCompletion(wishId, wish) {
+            const newCompletedState = !wish.completed;
+            const updatedTasks = wish.tasks.map(t => ({ ...t, completed: newCompletedState }));
+
+            if (!db || !userId) return console.error("Firestore not initialized.");
+            
+            const confirmed = await customConfirm(
+                newCompletedState 
+                ? `目標「${wish.title}」を完了済みにしますか？（未完了タスクも全て完了になります）`
+                : `目標「${wish.title}」を未完了に戻しますか？（全てのタスクも未完了に戻ります）`
+            );
+            if (!confirmed) return;
+
+            try {
+                const docRef = doc(db, 'artifacts', appId, 'users', userId, 'wishes', wishId);
+                await updateDoc(docRef, { 
+                    completed: newCompletedState,
+                    tasks: updatedTasks 
+                });
+            } catch (error) {
+                console.error("Error updating document: ", error);
+                await customConfirm("目標の更新に失敗しました: " + error.message, 'エラー');
+            }
+        }
+
+        async function deleteWish(wishId, title) {
+            if (!db || !userId) return console.error("Firestore not initialized.");
+            
+            const confirmed = await customConfirm(`目標「${title}」を本当に削除しますか？`, '目標削除');
+            if (!confirmed) return;
+
+            try {
+                const docRef = doc(db, 'artifacts', appId, 'users', userId, 'wishes', wishId);
+                await deleteDoc(docRef);
+            } catch (error) {
+                console.error("Error deleting document: ", error);
+                await customConfirm("目標の削除に失敗しました: " + error.message, 'エラー');
+            }
+        }
+
+        async function addTask(wishId, wish, description) {
+            const taskDesc = description.trim();
+            if (!taskDesc || !db || !userId) return;
+
+            const newTasks = [...(wish.tasks || []), {
+                description: taskDesc,
+                completed: false,
+                priority: '手動'
+            }];
+
+            try {
+                const docRef = doc(db, 'artifacts', appId, 'users', userId, 'wishes', wishId);
+                await updateDoc(docRef, { 
+                    tasks: newTasks
+                });
+            } catch (error) {
+                console.error("Error adding task: ", error);
+                await customConfirm("タスクの追加に失敗しました: " + error.message, 'エラー');
+            }
+        }
+
+        async function toggleTaskCompletion(wishId, wish, taskIndex) {
+            if (!db || !userId) return console.error("Firestore not initialized.");
+            
+            const updatedTasks = [...wish.tasks];
+            updatedTasks[taskIndex].completed = !updatedTasks[taskIndex].completed;
+            
+            const allTasksCompleted = updatedTasks.every(t => t.completed);
+
+            try {
+                const docRef = doc(db, 'artifacts', appId, 'users', userId, 'wishes', wishId);
+                await updateDoc(docRef, { 
+                    tasks: updatedTasks,
+                    completed: allTasksCompleted // 全タスク完了なら目標も完了
+                });
+            } catch (error) {
+                console.error("Error updating task status: ", error);
+                await customConfirm("タスク状態の更新に失敗しました: " + error.message, 'エラー');
+            }
+        }
+        
+        async function deleteTask(wishId, wish, taskIndex) {
+            if (!db || !userId) return console.error("Firestore not initialized.");
+            
+            const confirmed = await customConfirm('このタスクを削除しますか？', 'タスク削除');
+            if (!confirmed) return;
+
+            const updatedTasks = [...wish.tasks];
+            updatedTasks.splice(taskIndex, 1);
+
+            const allTasksCompleted = updatedTasks.every(t => t.completed);
+
+            try {
+                const docRef = doc(db, 'artifacts', appId, 'users', userId, 'wishes', wishId);
+                await updateDoc(docRef, { 
+                    tasks: updatedTasks,
+                    completed: allTasksCompleted // 全タスク完了なら目標も完了
+                });
+            } catch (error) {
+                console.error("Error deleting task: ", error);
+                await customConfirm("タスクの削除に失敗しました: " + error.message, 'エラー');
+            }
+        }
+
+
+        // --- 目標タイプ切り替え機能 ---
+        function toggleGoalFields() {
+            const selectedType = goalTypeSelectEl.value;
+            
+            generalGoalFieldsEl.classList.add('hidden');
+            examGoalFieldsEl.classList.add('hidden');
+            businessGoalFieldsEl.classList.add('hidden');
+
+            if (selectedType === 'general') {
+                generalGoalFieldsEl.classList.remove('hidden');
+            } else if (selectedType === 'exam') {
+                examGoalFieldsEl.classList.remove('hidden');
+            } else if (selectedType === 'business') {
+                businessGoalFieldsEl.classList.remove('hidden');
+            }
+        }
+
+
+        // --- アンケートとタスク生成ロジック ---
+
+        function openQuestionnaire() {
+            const goalType = goalTypeSelectEl.value;
+            let isValid = true;
+            let titleText = '';
+
+            if (goalType === 'general') {
+                const title = wishInputEl.value.trim();
+                const deadline = deadlineInputEl.value;
+                if (!title) { isValid = false; customConfirm('目標を入力してください。', '入力不足'); }
+                titleText = title;
+                temporaryWishData = { type: 'general', title, criterion: criterionInputEl.value.trim(), deadline, completed: false, tasks: [] };
+                
+                q1LabelEl.textContent = '1. あなたの目標の主な分野は？';
+                q1FieldEl.innerHTML = `<option value="language">語学学習 (英語、他言語)</option><option value="programming">IT / プログラミング</option><option value="finance">金融 / 投資</option><option value="fitness">身体能力 / フィットネス</option><option>創造活動 / 趣味</option><option>生活習慣改善 / 健康</option><option>その他</option>`;
+                
+            } else if (goalType === 'exam') {
+                const examName = examNameInputEl.value.trim();
+                const targetScore = targetScoreInputEl.value.trim();
+                const examDate = examDateInputEl.value;
+                if (!examName || !targetScore || !examDate) { isValid = false; customConfirm('試験名、目標点数、試験日を全て入力してください。', '入力不足'); }
+                titleText = `${examName}で${targetScore}点を取る`;
+                temporaryWishData = { type: 'exam', title: titleText, examName, targetScore, examDate, completed: false, tasks: [] };
+                
+                q1LabelEl.textContent = '1. 受験・資格試験の主な対象科目や分野は？';
+                q1FieldEl.innerHTML = `<option value="english">英語</option><option value="math">数学</option><option value="science">理科 (物理、化学、生物)</option><option value="social">社会 (歴史、地理、公民)</option><option value="japanese">国語</option><option>専門科目</option>`;
+
+            } else if (goalType === 'business') {
+                const title = businessTargetInputEl.value.trim();
+                const kpi = businessKpiInputEl.value.trim();
+                const deadline = businessDeadlineInputEl.value;
+                if (!title || !kpi || !deadline) { isValid = false; customConfirm('目標、KPI/指標、期限を全て入力してください。', '入力不足'); }
+                titleText = title;
+                temporaryWishData = { type: 'business', title, kpi, deadline, completed: false, tasks: [] };
+                
+                q1LabelEl.textContent = '1. ビジネス目標の主な領域は？';
+                q1FieldEl.innerHTML = `<option value="sales">営業・売上向上</option><option value="marketing">マーケティング・ブランディング</option><option value="project">プロジェクト管理・達成</option><option value="development">製品開発・改善</option><option value="management">組織・チーム管理</option><option>自己啓発・スキルアップ</option><option>その他</option>`;
+            }
+
+            if (!isValid) return;
+
+            questionnaireModal.style.display = 'flex';
+            document.body.classList.add('modal-open');
+        }
+
+        async function generateTasksFromQuestionnaire() {
+            if (!temporaryWishData) return;
+
+            const q1Field = document.getElementById('q1-field').value;
+            const q2Level = document.getElementById('q2-level').value;
+            const q3Time = document.getElementById('q3-time').value;
+            const q4Style = document.getElementById('q4-style').value;
+            const q5Difficulty = document.getElementById('q5-difficulty').value;
+
+            generateTasksButton.disabled = true;
+            modalStatusEl.classList.remove('hidden');
+
+            try {
+                const generatedTasks = await callGeminiForTasks(
+                    temporaryWishData,
+                    q1Field, q2Level, q3Time, q4Style, q5Difficulty
+                );
+
+                const finalWishData = {
+                    ...temporaryWishData,
+                    tasks: generatedTasks,
+                    lastReview: null // AIレビューの初期化
+                };
+                await saveWishToFirestore(finalWishData);
+
+                clearInputFields();
+                questionnaireModal.style.display = 'none';
+                document.body.classList.remove('modal-open');
+                
+            } catch (error) {
+                console.error("Task generation failed:", error);
+                await customConfirm("行動計画の生成中にエラーが発生しました。時間を置いて再度お試しください: " + error.message, 'エラー');
+            } finally {
+                generateTasksButton.disabled = false;
+                modalStatusEl.classList.add('hidden');
+                temporaryWishData = null;
+            }
+        }
+        
+        function clearInputFields() {
+            wishInputEl.value = '';
+            criterionInputEl.value = '';
+            deadlineInputEl.value = '';
+            examNameInputEl.value = '';
+            targetScoreInputEl.value = '';
+            examDateInputEl.value = '';
+            businessTargetInputEl.value = '';
+            businessKpiInputEl.value = '';
+            businessDeadlineInputEl.value = '';
+        }
+
+        async function callGeminiForTasks(wishData, q1Field, q2Level, q3Time, q4Style, q5Difficulty) {
+            
+            let goalDescription = "";
+            let deadlineText = "";
+
+            if (wishData.type === 'exam') {
+                goalDescription = `受験目標: ${wishData.examName}で${wishData.targetScore}点を取る。`;
+                deadlineText = `試験日: ${wishData.examDate}。`;
+            } else if (wishData.type === 'business') {
+                 goalDescription = `ビジネス・キャリア目標: 「${wishData.title}」、達成KPI/指標: 「${wishData.kpi}」。`;
+                 deadlineText = `期限: ${wishData.deadline}。`;
+            } else {
+                goalDescription = `目標: 「${wishData.title}」、達成条件: 「${wishData.criterion || 'なし'}」。`;
+                deadlineText = `期限: ${wishData.deadline || 'なし'}。`;
+            }
+
+
+            const userQuery = `
+                ${goalDescription}
+                ${deadlineText}
+                
+                ユーザーの目標設定（詳細アンケート結果）:
+                1. 主な分野/領域: ${q1Field}
+                2. 現在のレベル: ${q2Level}
+                3. 1日に確保できる時間/リソース: ${q3Time}
+                4. 学習/作業スタイル: ${q4Style}
+                5. 最初のタスクの難易度: ${q5Difficulty}
+
+                上記の情報を参考に、目標達成に向けた具体的なステップとなるタスクを5〜7個、日本語で作成してください。
+                タスクは、SMART原則に基づき、実行可能で計測可能であるようにしてください。
+                期限と確保できる時間から逆算して「高」「中」「低」の優先度を割り振ってください。
+                最初の1〜2個のタスクは、質問5の難易度レベルを反映させてください。
+            `;
+
+            const systemPrompt = "あなたは目標設定と計画のプロフェッショナルです。ユーザーの目標と詳細なアンケート回答に基づき、具体的なタスクリストをJSON形式で提供してください。";
+
+            const payload = {
+                contents: [{ parts: [{ text: userQuery }] }],
+                systemInstruction: { parts: [{ text: systemPrompt }] },
+                generationConfig: {
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        type: "ARRAY",
+                        items: {
+                            type: "OBJECT",
+                            properties: {
+                                "description": { "type": "STRING", "description": "タスクの具体的な内容（実行可能で計測可能な日本語の文章）" },
+                                "priority": { "type": "STRING", "description": "タスクの重要度。必ず「高」「中」「低」のいずれかを選択してください" },
+                                "completed": { "type": "BOOLEAN", "description": "初期状態は必ずfalseにしてください" }
+                            },
+                            required: ["description", "priority", "completed"]
+                        }
+                    }
+                }
+            };
+            
+            const apiUrlWithKey = `${API_URL}?key=${API_KEY}`;
+            const response = await fetchWithExponentialBackoff(apiUrlWithKey, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            const result = await response.json();
+            
+            if (result.candidates && result.candidates.length > 0 && 
+                result.candidates[0].content && result.candidates[0].content.parts &&
+                result.candidates[0].content.parts.length > 0) {
+                
+                const jsonText = result.candidates[0].content.parts[0].text;
+                const parsedJson = JSON.parse(jsonText);
+                
+                return parsedJson.map(task => ({
+                    ...task,
+                    completed: false
+                }));
+
+            } else {
+                throw new Error("AIからの行動計画生成に失敗しました。");
+            }
+        }
+
+        // --- AIレビュー機能 ---
+
+        async function callGeminiForReview(wishId, wish) {
+            
+            const progress = calculateProgress(wish);
+            const totalTasks = (wish.tasks || []).length;
+            const completedTasks = (wish.tasks || []).filter(t => t.completed).length;
+            const incompleteTasks = (wish.tasks || []).filter(t => !t.completed);
+            
+            let deadlineInfo = '';
+            if (progress.status === 'overdue') {
+                deadlineInfo = `期限を${progress.daysLeft}超過しています。`;
+            } else if (progress.status === 'urgent') {
+                deadlineInfo = `期限まで残り${progress.daysLeft}です。非常に緊急です。`;
+            } else if (progress.status === 'active') {
+                deadlineInfo = `期限まで残り${progress.daysLeft}です。`;
+            } else if (progress.status === 'completed') {
+                // 完了済み目標にはレビュー不要だが、メッセージを出す
+                const message = "この目標はすでに達成済みです！素晴らしい成果です。次の目標に挑戦しましょう！";
+                 await updateDoc(doc(db, 'artifacts', appId, 'users', userId, 'wishes', wishId), { lastReview: message });
+                 return;
+            } else {
+                deadlineInfo = '期限設定はありません。';
+            }
+
+            const statusReport = `
+                目標: ${wish.title}
+                進捗: ${progress.completionPercentage}% (${completedTasks}/${totalTasks}タスク完了)
+                期限情報: ${deadlineInfo}
+                残っているタスク（${incompleteTasks.length}個）:
+                ${incompleteTasks.map(t => `- [${t.priority}] ${t.description}`).join('\n')}
+            `;
+
+            const userQuery = `
+                以下の目標の進捗レポートを分析し、ユーザーに合わせたフィードバックとモチベーションメッセージを提供してください。
+                フィードバックは以下の点を含めてください:
+                1. 現状の肯定的な評価（頑張っている点）
+                2. 計画修正や加速のための具体的なアドバイス（例：高優先度のタスクに集中、時間を確保するための提案など）
+                3. 最後はポジティブで温かい励ましの言葉で締めくくること。
+                メッセージは親しみやすい日本語で、150文字程度で簡潔にまとめてください。
+                ---レポート---
+                ${statusReport}
+            `;
+
+            const systemPrompt = "あなたはユーザーのパーソナルコーチであり、計画の進捗を分析し、具体的かつモチベーションを高めるフィードバックを提供するのが役割です。";
+
+            const payload = {
+                contents: [{ parts: [{ text: userQuery }] }],
+                systemInstruction: { parts: [{ text: systemPrompt }] },
+            };
+
+            const apiUrlWithKey = `${API_URL}?key=${API_KEY}`;
+            const response = await fetchWithExponentialBackoff(apiUrlWithKey, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            const result = await response.json();
+            
+            if (result.candidates && result.candidates.length > 0 && 
+                result.candidates[0].content && result.candidates[0].content.parts &&
+                result.candidates[0].content.parts.length > 0) {
+                
+                const reviewText = result.candidates[0].content.parts[0].text;
+                
+                // Firestoreにレビュー結果を保存してUIを更新
+                try {
+                    await updateDoc(doc(db, 'artifacts', appId, 'users', userId, 'wishes', wishId), { lastReview: reviewText });
+                } catch (error) {
+                    console.error("Error saving review: ", error);
+                    await customConfirm("レビューの保存に失敗しました: " + error.message, 'エラー');
+                }
+            } else {
+                await customConfirm("AIレビューの生成中にエラーが発生しました。", 'エラー');
+            }
+        }
+
+
+        // --- イベントリスナー設定 ---
+        goalTypeSelectEl.addEventListener('change', () => {
+            toggleGoalFields();
+            q1FieldEl.innerHTML = '';
+        });
+        addWishButton.addEventListener('click', openQuestionnaire);
+        generateTasksButton.addEventListener('click', generateTasksFromQuestionnaire);
+        closeResultButton.addEventListener('click', () => {
+             resultScreenEl.style.display = 'none';
+             document.body.style.overflow = 'auto';
+        });
+
+        // Enterキーでの目標追加をサポート
+        [wishInputEl, criterionInputEl, examNameInputEl, targetScoreInputEl, businessTargetInputEl, businessKpiInputEl].forEach(el => {
+            el.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    openQuestionnaire();
+                }
+            });
+        });
+
+        // --- 初期ロード時の実行 ---
+        window.onload = function() {
+            initFirebase();
+            toggleGoalFields(); 
+        };
+        
+        // window.confirm/alert のカスタム代替機能を使用
+        window.confirm = customConfirm;
+        window.alert = (message) => customConfirm(message, 'お知らせ');
+    </script>
+
 </body>
 </html>
